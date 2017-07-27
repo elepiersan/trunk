@@ -28,13 +28,20 @@ O.engines=[
 		[Ip2_FrictMat_FrictMat_FrictPhys()],
 		[Law2_ScGeom_FrictPhys_CundallStrack()],
 	),
-	NewtonIntegrator(damping=.1,gravity=[0,0,0]),
-	PyRunner(iterPeriod=1000,command='timing.stats(); O.pause();'),
+	NewtonIntegrator(damping=0.1,gravity=[0,0,0]),
+	# FlowEngine(label="flow"),#introduced as a dead engine for the moment, see 2nd section
+
 ]
-O.dt=.7*PWaveTimeStep()
+
+for b in O.bodies:
+	if isinstance(b.shape,Sphere):
+		print b.state.pos
+		print b.shape.radius
+
+O.dt=0.1*PWaveTimeStep()
 O.saveTmp()
 O.timingEnabled=True
 O.trackEnergy=True
 
-a = qt.View()
-yade.qt._GLViewer.GLViewer.saveSnapshot(qt.View(), "sphere.png")
+#a = qt.View()
+#yade.qt._GLViewer.GLViewer.saveSnapshot(qt.View(), "sphere.png")
