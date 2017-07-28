@@ -7,7 +7,7 @@ locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')   #gts is locale-dependend.  If, 
 
 surf=gts.read(open('../mesh/sphere.gts'))
 
-idTissue=O.materials.append(FrictMat(young=500.0,poisson=.35,frictionAngle=.6,label="concrete"))
+idTissue=O.materials.append(FrictMat(young=500.0, poisson=.35, density=1.0, frictionAngle=.6,label="concrete"))
 pred=pack.inGtsSurface(surf)
 aabb=pred.aabb()
 
@@ -16,7 +16,7 @@ dim0=aabb[1][0]-aabb[0][0];
 dim0 = dim0/2.0
 # small
 radius=dim0/20.0 # get some characteristic dimension, use it for radius
-O.bodies.append(pack.regularHexa(pred, radius=radius, gap=0.0, material=idTissue))
+O.bodies.append(pack.regularHexa(pred, radius=radius, gap=0.0, material=idTissue, color=(0,1,0)))
 
 O.bodies.append(pack.gtsSurface2Facets(surf,wire=True))
 
@@ -35,9 +35,10 @@ O.engines=[
 
 for b in O.bodies:
 	if isinstance(b.shape,Sphere):
-		print b.state.pos
-		print b.shape.radius
-		print b.state.mass
+		print "id = ", b.id		
+		print "position = ", b.state.pos
+		print "radius = ", b.shape.radius
+		print "mass = ", b.state.mass
 
 #This is the critical timestep, determined by spheres size 
 O.dt=0.1*PWaveTimeStep()
