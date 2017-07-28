@@ -15,7 +15,7 @@ dim0=aabb[1][0]-aabb[0][0];
 # brain radius
 dim0 = dim0/2.0
 # small
-radius=dim0/20. # get some characteristic dimension, use it for radius
+radius=dim0/20.0 # get some characteristic dimension, use it for radius
 O.bodies.append(pack.regularHexa(pred, radius=radius, gap=0.0, material=idTissue))
 
 O.bodies.append(pack.gtsSurface2Facets(surf,wire=True))
@@ -37,11 +37,13 @@ for b in O.bodies:
 	if isinstance(b.shape,Sphere):
 		print b.state.pos
 		print b.shape.radius
+		print b.state.mass
 
+#This is the critical timestep, determined by spheres size 
 O.dt=0.1*PWaveTimeStep()
 O.saveTmp()
 O.timingEnabled=True
 O.trackEnergy=True
 
-#a = qt.View()
+qt.View()
 #yade.qt._GLViewer.GLViewer.saveSnapshot(qt.View(), "sphere.png")
