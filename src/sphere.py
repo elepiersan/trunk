@@ -7,14 +7,15 @@ locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')   #gts is locale-dependend.  If, 
 
 surf=gts.read(open('../mesh/sphere.gts'))
 
-idTissue=O.materials.append(FrictMat(young=500.0, poisson=.35, density=1.0, frictionAngle=.6,label="concrete"))
+#change material to a more appropriate
+idTissue=O.materials.append(FrictMat(young=500.0, poisson=.35, density=1000.0, frictionAngle=.6,label="concrete"))
 pred=pack.inGtsSurface(surf)
 aabb=pred.aabb()
 
-dim0=aabb[1][0]-aabb[0][0];
+dim0=(aabb[1][0]-aabb[0][0])/2.0;
 print dim0
 # small
-radius=1.0 # get some characteristic dimension, use it for radius
+radius=dim0/20.0 # get some characteristic dimension, use it for radius
 print radius
 O.bodies.append(pack.regularHexa(pred, radius=radius, gap=0.0, material=idTissue, color=(0,1,0)))
 
@@ -47,6 +48,10 @@ with open("state_shape.csv", "w") as f:
             wrt.writerow(("position ", position))
             wrt.writerow(("radius " , b.shape.radius))
             wrt.writerow(("mass ", b.state.mass))
+        if isinstance(b.shape,Facet):
+            print "facet"
+            print b.id
+            print b.state.mass
 
 with open("Material.csv", "w") as f:
     wrt = csv.writer(f)
@@ -127,4 +132,5 @@ O.timingEnabled=True
 O.trackEnergy=True
 
 qt.View()
+O.run()
 #yade.qt._GLViewer.GLViewer.saveSnapshot(qt.View(), "sphere.png")
