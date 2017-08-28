@@ -18,7 +18,7 @@ wallMaterial=O.materials.append(CohFrictMat(young=50000.0, poisson=.35, density=
 
 minX = -0.10671062880416388
 maxX = 0.10671062880416388
-minY = -0.2363490390055643
+minY = -0.23931477988411162
 maxY = 0.10670230537773978
 minZ = 0.0
 maxZ = 0.0059723808531952655
@@ -40,6 +40,7 @@ ntheta = 250
 theta = np.linspace(0, 2.0*np.pi, ntheta, endpoint=False)
 dt = theta[1] - theta[0] 
 
+tlimit = []
 xlimit = []
 ylimit = []
 dx = []
@@ -52,11 +53,11 @@ for r in [rSAS, rSkull]:
 
 for z in [1, 3]:
     for t in theta:
-        # if (t < 3.0/2.0 *np.pi - 3*dt or t > 3.0/2.0 *np.pi + 3*dt):
-        s = utils.sphere(center=[rSAS*np.cos(t), rSAS*np.sin(t), rb[0]*z], radius=rb[0], material=idTissue)
-        O.bodies.append(s)
-        s = utils.sphere(center=[(rSAS+rb[0]+rb[1])*np.cos(t), (rSAS+rb[0]+rb[1])*np.sin(t), rb[1]*z], radius=rb[1], material=idTissue)
-        O.bodies.append(s)
+        if (t < 3.0/2.0 *np.pi - 3*dt or t > 3.0/2.0 *np.pi + 3*dt):
+            s = utils.sphere(center=[rSAS*np.cos(t), rSAS*np.sin(t), rb[0]*z], radius=rb[0], material=idTissue)
+            O.bodies.append(s)
+            s = utils.sphere(center=[(rSAS+rb[0]+rb[1])*np.cos(t), (rSAS+rb[0]+rb[1])*np.sin(t), rb[1]*z], radius=rb[1], material=idTissue)
+            O.bodies.append(s)
         if (t >= 3.0/2.0 * np.pi - 5*dt and t <= 3.0/2.0 * np.pi - 3*dt) or (t >= 3.0/2.0 * np.pi + 3*dt and t <= 3.0/2.0 * np.pi + 5*dt):
             tlimit += [t]
             for i in range(1,50):
@@ -66,18 +67,34 @@ for z in [1, 3]:
             xlimit += [(rSAS+rb[0]+rb[1])*np.cos(t)]
             ylimit += [(rSAS+rb[0]+rb[1])*np.sin(t)-2*i*rb[1]]
              
-# print xlimit
-# print ylimit
-# dx = xlimit[3] - xlimit[0]
-# Nbase = 9
-# rbase = dx/(Nbase*2-2)
-# print rbase
-# for i in range(Nbase):
-#     for z in [1,3]:
-        # s = utils.sphere(center=[xlimit[0] + i*2*rbase, ylimit[0]-rb[1]-rbase, rbase*z], radius=rbase, material=idTissue)
+print xlimit
+print ylimit
+dx = xlimit[3] - xlimit[0]
+Nbase = 9
+rbase = dx/(Nbase*2-2)
+
+print rbase
+for i in range(2):
+    for z in [1,3]:
+        s = utils.sphere(center=[xlimit[0] + i*2*rbase, ylimit[i]-rb[1]-rbase, rbase*z], radius=rbase, material=idTissue)
+        O.bodies.append(s)
+        # s = utils.sphere(center=[xlimit[0] + i*2*rbase, ylimit[i]-rb[1]-3*rbase, rbase*z], radius=rbase, material=idTissue)
         # O.bodies.append(s)
-        # s = utils.sphere(center=[xlimit[0] + i*2*rbase, ylimit[0]-rb[1]-3*rbase, rbase*z], radius=rbase, material=idTissue)
+for i in range(2):
+    for z in [1,3]:
+        s = utils.sphere(center=[xlimit[6] + i*2*rbase, ylimit[6+i]-rb[1]-rbase, rbase*z], radius=rbase, material=idTissue)
+        O.bodies.append(s)
+        # s = utils.sphere(center=[xlimit[6] + i*2*rbase, ylimit[6+i]-rb[1]-3*rbase, rbase*z], radius=rbase, material=idTissue)
         # O.bodies.append(s)
+for i in range(2,7):
+    for z in [1,3]:
+        s = utils.sphere(center=[xlimit[0] + i*2*rbase, ylimit[1]-rb[1]-rbase, rbase*z], radius=rbase, material=idTissue)
+        O.bodies.append(s)
+
+for i in range(1,6):
+    for z in [1,3]:
+        s = utils.sphere(center=[xlimit[1] + i*2*rbase, ylimit[1]-rb[1]+rbase, rbase*z], radius=rbase, material=idTissue)
+        O.bodies.append(s)
 
 qt.View()
 
