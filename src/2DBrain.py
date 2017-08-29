@@ -6,22 +6,26 @@ import numpy as np
 
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')   #gts is locale-dependend.  If, for example, german locale is used, gts.read()-function does not import floats normally
 
-surf=gts.read(open('2DBrain.gts'))
+surf=gts.read(open('../mesh/2DBrain_spine.gts'))
 
 Rin = 0.03
 Rout = 0.1
 rp = 0.0014000
 
 
-idTissue=O.materials.append(CohFrictMat(young=500.0, poisson=.35, density=1000.0, fragile=False, frictionAngle=.6,label="concrete"))
-wallMaterial=O.materials.append(CohFrictMat(young=50000.0, poisson=.35, density=1000.0, fragile=False, frictionAngle=.6,label="walls"))
+idTissue=O.materials.append(FrictMat(young=500.0, poisson=.35, density=1000.0, frictionAngle=.6,label="tissue"))
+idSkull=O.materials.append(FrictMat(young=10000000.0, poisson=.35, density=2000.0, frictionAngle=.6,label="skull"))
 
-minX = -0.10671062880416388
-maxX = 0.10671062880416388
-minY = -0.23931477988411162
-maxY = 0.10670230537773978
-minZ = 0.0
-maxZ = 0.0059723808531952655
+wallMaterial=O.materials.append(FrictMat(young=10000000.0, poisson=.35, density=1000.0, frictionAngle=.6,label="walls"))
+print "idTissue = ", idTissue
+print "wallMaterial = ", wallMaterial
+
+minX = -0.10668581441037103
+maxX =  0.10668581441037103
+minY = -0.23733754727640186 
+maxY =  0.10670230537773978
+minZ =  0.0
+maxZ =  0.011892672035984387
 mn,mx=Vector3(minX,minY,minZ),Vector3(maxX,maxY,maxZ) # corners of the initial packing
 walls=aabbWalls([mn,mx],thickness=0, material="walls")
 wallIds=O.bodies.append(walls)
@@ -29,10 +33,19 @@ wallIds=O.bodies.append(walls)
 pred=pack.inGtsSurface(surf)
 spheres=pack.regularHexa(pred, radius=rp, gap=0.0, color=(1,0,0), material=idTissue)
 O.bodies.append(spheres)
+print "red mass = ", O.bodies[-1].state.mass
+for b in O.bodies:
+    if isinstance(b.shape,Sphere):
+        if b.state.pos[1] < -0.097:
+            print "position y = ", b.state.pos
 
+
+print "radius hex = ", rp
 radius = np.arange(Rin+rp, Rout-rp, 2.0*rp)
 rSAS = 0.1 + 2.0 * rp 
-rSkull = rSAS + 2.0*rp 
+print "rSAS = ", rSAS
+rSkull = rSAS + 2.0*rp
+print "rSkull = ", rSkull 
 alphaSAS = 4.0*np.arcsin(rp/(2*rSAS)) 
 alphaSkull = 4.0*np.arcsin(rp/(2*rSkull))
 toll = 0.0
@@ -51,22 +64,27 @@ for r in [rSAS, rSkull]:
     b = r - r*np.cos((theta[1] - theta[0])/2.0)
     rb += [np.sqrt(a*a + b*b) - 2e-5]
 
-for z in [1, 3]:
+for z in [1, 3, 5, 7]:
     for t in theta:
         if (t < 3.0/2.0 *np.pi - 3*dt or t > 3.0/2.0 *np.pi + 3*dt):
-            s = utils.sphere(center=[rSAS*np.cos(t), rSAS*np.sin(t), rb[0]*z], radius=rb[0], material=idTissue)
+            s = utils.sphere(center=[rSAS*np.cos(t), rSAS*np.sin(t), rb[0]*z], radius=rb[0], color=(0,1,0), material=idSkull)
             O.bodies.append(s)
-            s = utils.sphere(center=[(rSAS+rb[0]+rb[1])*np.cos(t), (rSAS+rb[0]+rb[1])*np.sin(t), rb[1]*z], radius=rb[1], material=idTissue)
+            # print "green mass", O.bodies[-1].state.mass
+            s = utils.sphere(center=[(rSAS+rb[0]+rb[1])*np.cos(t), (rSAS+rb[0]+rb[1])*np.sin(t), rb[1]*z], radius=rb[1], color=(0,1,1), material=idSkull)
             O.bodies.append(s)
+            # print "light blue mass", O.bodies[-1].state.mass
         if (t >= 3.0/2.0 * np.pi - 5*dt and t <= 3.0/2.0 * np.pi - 3*dt) or (t >= 3.0/2.0 * np.pi + 3*dt and t <= 3.0/2.0 * np.pi + 5*dt):
             tlimit += [t]
             for i in range(1,50):
-                s = utils.sphere(center=[(rSAS+rb[0]+rb[1])*np.cos(t), (rSAS+rb[0]+rb[1])*np.sin(t)-2*i*rb[1], rb[1]*z], radius=rb[1], material=idTissue)
+                s = utils.sphere(center=[(rSAS+rb[0]+rb[1])*np.cos(t), (rSAS+rb[0]+rb[1])*np.sin(t)-2*i*rb[1], rb[1]*z], radius=rb[1], color=(0,0,1), material=idSkull)
                 O.bodies.append(s)
+            # print "blue mass", O.bodies[-1].state.mass
             
             xlimit += [(rSAS+rb[0]+rb[1])*np.cos(t)]
             ylimit += [(rSAS+rb[0]+rb[1])*np.sin(t)-2*i*rb[1]]
-             
+
+
+print "rb = ", rb             
 print xlimit
 print ylimit
 dx = xlimit[3] - xlimit[0]
@@ -75,29 +93,32 @@ rbase = dx/(Nbase*2-2)
 
 print rbase
 for i in range(2):
-    for z in [1,3]:
-        s = utils.sphere(center=[xlimit[0] + i*2*rbase, ylimit[i]-rb[1]-rbase, rbase*z], radius=rbase, material=idTissue)
+    for z in [1, 3, 5, 7]:
+        s = utils.sphere(center=[xlimit[0] + i*2*rbase, ylimit[i]-rb[1]-rbase, rbase*z], radius=rbase, color=(1,0,1), material=idSkull)
         O.bodies.append(s)
         # s = utils.sphere(center=[xlimit[0] + i*2*rbase, ylimit[i]-rb[1]-3*rbase, rbase*z], radius=rbase, material=idTissue)
         # O.bodies.append(s)
 for i in range(2):
-    for z in [1,3]:
-        s = utils.sphere(center=[xlimit[6] + i*2*rbase, ylimit[6+i]-rb[1]-rbase, rbase*z], radius=rbase, material=idTissue)
+    for z in [1, 3, 5, 7]:
+        s = utils.sphere(center=[xlimit[6] + i*2*rbase, ylimit[6+i]-rb[1]-rbase, rbase*z], radius=rbase, color=(1,0,1), material=idSkull)
         O.bodies.append(s)
         # s = utils.sphere(center=[xlimit[6] + i*2*rbase, ylimit[6+i]-rb[1]-3*rbase, rbase*z], radius=rbase, material=idTissue)
         # O.bodies.append(s)
 for i in range(2,7):
-    for z in [1,3]:
-        s = utils.sphere(center=[xlimit[0] + i*2*rbase, ylimit[1]-rb[1]-rbase, rbase*z], radius=rbase, material=idTissue)
+    for z in [1, 3, 5, 7]:
+        s = utils.sphere(center=[xlimit[0] + i*2*rbase, ylimit[1]-rb[1]-rbase, rbase*z], radius=rbase, color=(1,0,1), material=idSkull)
         O.bodies.append(s)
 
 for i in range(1,6):
-    for z in [1,3]:
-        s = utils.sphere(center=[xlimit[1] + i*2*rbase, ylimit[1]-rb[1]+rbase, rbase*z], radius=rbase, material=idTissue)
+    for z in [1, 3, 5, 7]:
+        s = utils.sphere(center=[xlimit[1] + i*2*rbase, ylimit[1]-rb[1]+rbase, rbase*z], radius=rbase, color=(1,0,1), material=idSkull)
         O.bodies.append(s)
+print "purple mass", O.bodies[-1].state.mass
 
+# quit()
 qt.View()
 
+print "rbase = ", rbase
 newton=NewtonIntegrator(damping=0.2)
 
 O.engines=[
@@ -105,7 +126,7 @@ ForceResetter(),
 InsertionSortCollider([Bo1_Sphere_Aabb(),Bo1_Box_Aabb()]),
 InteractionLoop(
     [Ig2_Sphere_Sphere_ScGeom(),Ig2_Box_Sphere_ScGeom()],
-    [Ip2_CohFrictMat_CohFrictMat_CohFrictPhys()],
+    [Ip2_FrictMat_FrictMat_FrictPhys()],
     [Law2_ScGeom_FrictPhys_CundallStrack()],label="iloop"
 ),
 FlowEngine(label="flow"),#introduced as a dead engine for the moment, see 2nd section
@@ -134,3 +155,6 @@ flow.bndCondValue=[0,0,0,0,0,0]
 
 O.run(1, True)
 flow.saveVtk("./VTK")
+
+#Make 4 layers
+# look a cohesive material yade.wrapper.JCFpmMat
